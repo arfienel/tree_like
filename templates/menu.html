@@ -1,0 +1,124 @@
+<style>
+    ul, #myUL {
+  list-style-type: none;
+}
+
+/* Remove margins and padding from the parent ul */
+#myUL {
+  margin: 0;
+  padding: 0;
+}
+
+/* Style the caret/arrow */
+.caret {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection */
+}
+
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+  content: "\25B6";
+  color: black;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+  transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {
+  display: none;
+}
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+  display: block;
+}
+  </style>
+
+<ul id="myUL">
+
+</ul>
+
+
+<script>
+    // создание древовидного меню
+    menu = {{menu | safe}};
+    ul = document.getElementById('myUL');
+    console.log(menu);
+    // создание главных статей
+    menu.forEach(function(article, index, object) {
+      if(article.childs && !article.parent_id){
+        var li = document.createElement('li');
+        var li_html = `<li><span id="menu_caret_${article.id}" class="caret"><a href="/article/${article.slug}/">${article.title}</a></span>
+    <ul id='menu_article_${article.id}' class="nested"></ul></li>`
+        li.innerHTML = li_html;
+        ul.append(li);
+        object.splice(index,1);
+      }
+      else if(!article.parent_id){
+        var li = document.createElement('li');
+        var li_html = `<li><a href="/article/${article.slug}/">${article.title}</a></li>`
+        li.innerHTML = li_html;
+        ul.append(li);
+        object.splice(index,1);
+      }
+    });
+     // создание подстатей
+    while(menu.length != 0){
+      menu.every(function(article, index, object) {
+        parent = document.getElementById('menu_article_'+article.parent_id)
+        if(parent){
+          if(article.childs){
+              var li = document.createElement('li');
+              var li_html = `<li><span id="menu_caret_${article.id}" class="caret"><a href="/article/${article.slug}/">${article.title}</a></span>
+                       <ul id='menu_article_${article.id}' class="nested"></ul></li>`
+              li.innerHTML = li_html;
+              parent.append(li);
+              object.splice(index,1);
+          }
+          else if(!article.childs){
+            var li = document.createElement('li');
+            var li_html = `<li><a href="/article/${article.slug}/">${article.title}</a></li>`
+            li.innerHTML = li_html;
+            parent.append(li);
+            object.splice(index,1);
+          }
+        }
+      });
+    }
+</script>
+
+
+{% if articles_to_expand %}
+
+  <script>
+    // раскрытие открытой статьи в меню
+    articles_to_expand = {{articles_to_expand | safe}};
+
+    articles_to_expand.forEach(article_to_expand_id => {
+      try {
+        caret = document.getElementById('menu_caret_' + article_to_expand_id);
+        ul_to_expand = document.getElementById('menu_article_' + article_to_expand_id);
+        ul_to_expand.classList.toggle("active")
+        caret.classList.toggle("caret-down");
+      }
+      catch(e){
+
+      }
+    })
+  </script>
+{% endif %}
+<script>
+  var toggler = document.getElementsByClassName("caret");
+  var i;
+  for (i = 0; i < toggler.length; i++) {
+    toggler[i].addEventListener("click", function() {
+    this.parentElement.querySelector(".nested").classList.toggle("active");
+    this.classList.toggle("caret-down");
+  });
+}
+</script>
